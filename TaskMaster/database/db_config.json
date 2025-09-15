@@ -1,1 +1,8 @@
-{}
+{
+  "database": "sqlite",
+  "sqlite_file": "taskmaster.db",
+  "username": "",
+  "password": "",
+  "host": "",
+  "port": ""
+}

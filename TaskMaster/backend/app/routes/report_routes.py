@@ -1,4 +1,4 @@
-# Report routes with export functionality
+# Report routes with export functionality - FIXED VERSION
 from flask import Blueprint, jsonify, make_response, request
 from datetime import datetime, timedelta
 from app.models import Task, Category
@@ -10,7 +10,7 @@ import json
 try:
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment
-    from openpyxl.utils.dataframe import dataframe_to_rows
+    # FIXED: Removed unused import
     EXCEL_AVAILABLE = True
 except ImportError:
     EXCEL_AVAILABLE = False
@@ -46,13 +46,12 @@ def format_task_for_export(task):
 def create_csv_response(data, filename):
     """Create CSV response for download"""
     output = io.StringIO()
-
     if data:
         fieldnames = data[0].keys()
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
-
+    
     response = make_response(output.getvalue())
     response.headers['Content-Disposition'] = f'attachment; filename={filename}'
     response.headers['Content-Type'] = 'text/csv'
@@ -62,12 +61,12 @@ def create_excel_response(data, filename, sheet_name):
     """Create Excel response for download"""
     if not EXCEL_AVAILABLE:
         return jsonify({'message': 'Excel export not available. Install openpyxl package.'}), 500
-
+    
     output = io.BytesIO()
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = sheet_name
-
+    
     if data:
         # Headers
         headers = list(data[0].keys())
@@ -76,12 +75,12 @@ def create_excel_response(data, filename, sheet_name):
             cell.font = Font(bold=True)
             cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
             cell.alignment = Alignment(horizontal="center")
-
+        
         # Data rows
         for row, item in enumerate(data, 2):
             for col, header in enumerate(headers, 1):
                 sheet.cell(row=row, column=col, value=item[header])
-
+        
         # Auto-adjust column widths
         for column in sheet.columns:
             max_length = 0
@@ -94,10 +93,10 @@ def create_excel_response(data, filename, sheet_name):
                     pass
             adjusted_width = min(max_length + 2, 50)
             sheet.column_dimensions[column_letter].width = adjusted_width
-
+    
     workbook.save(output)
     output.seek(0)
-
+    
     response = make_response(output.getvalue())
     response.headers['Content-Disposition'] = f'attachment; filename={filename}'
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -111,8 +110,9 @@ def weekly_report():
     """Get weekly report in JSON format"""
     today = datetime.utcnow().date()
     week_end = today + timedelta(days=7)
-
+    
     tasks = get_tasks_in_date_range(today, week_end)
+    
     weekly_tasks = [
         {
             'id': t.id,
@@ -125,11 +125,11 @@ def weekly_report():
         }
         for t in tasks
     ]
-
+    
     # Calculate statistics
     completed_count = len([t for t in tasks if t.status == 'Completed'])
     pending_count = len([t for t in tasks if t.status == 'Pending'])
-
+    
     return jsonify({
         'week_start': today.strftime("%Y-%m-%d"),
         'week_end': week_end.strftime("%Y-%m-%d"),
@@ -148,10 +148,9 @@ def weekly_report_csv():
     """Export weekly report as CSV"""
     today = datetime.utcnow().date()
     week_end = today + timedelta(days=7)
-
     tasks = get_tasks_in_date_range(today, week_end)
+    
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'weekly_report_{today.strftime("%Y%m%d")}.csv'
     return create_csv_response(export_data, filename)
 
@@ -163,10 +162,9 @@ def weekly_report_excel():
     """Export weekly report as Excel"""
     today = datetime.utcnow().date()
     week_end = today + timedelta(days=7)
-
     tasks = get_tasks_in_date_range(today, week_end)
+    
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'weekly_report_{today.strftime("%Y%m%d")}.xlsx'
     sheet_name = f'Week {today.strftime("%Y-%m-%d")}'
     return create_excel_response(export_data, filename, sheet_name)
@@ -180,8 +178,9 @@ def monthly_report():
     today = datetime.utcnow().date()
     month_start = today.replace(day=1)
     month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-
+    
     tasks = get_tasks_in_date_range(month_start, month_end)
+    
     monthly_tasks = [
         {
             'id': t.id,
@@ -194,11 +193,11 @@ def monthly_report():
         }
         for t in tasks
     ]
-
+    
     # Calculate statistics
     completed_count = len([t for t in tasks if t.status == 'Completed'])
     pending_count = len([t for t in tasks if t.status == 'Pending'])
-
+    
     # Category breakdown
     category_stats = {}
     for task in tasks:
@@ -210,7 +209,7 @@ def monthly_report():
             category_stats[cat_name]['completed'] += 1
         else:
             category_stats[cat_name]['pending'] += 1
-
+    
     return jsonify({
         'month_start': month_start.strftime("%Y-%m-%d"),
         'month_end': month_end.strftime("%Y-%m-%d"),
@@ -231,10 +230,9 @@ def monthly_report_csv():
     today = datetime.utcnow().date()
     month_start = today.replace(day=1)
     month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-
     tasks = get_tasks_in_date_range(month_start, month_end)
+    
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'monthly_report_{today.strftime("%Y%m")}.csv'
     return create_csv_response(export_data, filename)
 
@@ -247,10 +245,9 @@ def monthly_report_excel():
     today = datetime.utcnow().date()
     month_start = today.replace(day=1)
     month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-
     tasks = get_tasks_in_date_range(month_start, month_end)
+    
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'monthly_report_{today.strftime("%Y%m")}.xlsx'
     sheet_name = f'Month {today.strftime("%Y-%m")}'
     return create_excel_response(export_data, filename, sheet_name)
@@ -263,20 +260,21 @@ def custom_report():
     """Get report for custom date range"""
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
-
+    
     if not start_date_str or not end_date_str:
         return jsonify({'message': 'Both start_date and end_date are required (YYYY-MM-DD)'}), 400
-
+    
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
     except ValueError:
         return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD'}), 400
-
+    
     if start_date > end_date:
         return jsonify({'message': 'Start date must be before or equal to end date'}), 400
-
+    
     tasks = get_tasks_in_date_range(start_date, end_date)
+    
     custom_tasks = [
         {
             'id': t.id,
@@ -289,11 +287,11 @@ def custom_report():
         }
         for t in tasks
     ]
-
+    
     # Calculate statistics
     completed_count = len([t for t in tasks if t.status == 'Completed'])
     pending_count = len([t for t in tasks if t.status == 'Pending'])
-
+    
     return jsonify({
         'date_range_start': start_date.strftime("%Y-%m-%d"),
         'date_range_end': end_date.strftime("%Y-%m-%d"),
@@ -312,22 +310,21 @@ def custom_report_csv():
     """Export custom date range report as CSV"""
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
-
+    
     if not start_date_str or not end_date_str:
         return jsonify({'message': 'Both start_date and end_date are required (YYYY-MM-DD)'}), 400
-
+    
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
     except ValueError:
         return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD'}), 400
-
+    
     if start_date > end_date:
         return jsonify({'message': 'Start date must be before or equal to end date'}), 400
-
+    
     tasks = get_tasks_in_date_range(start_date, end_date)
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'custom_report_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}.csv'
     return create_csv_response(export_data, filename)
 
@@ -339,22 +336,21 @@ def custom_report_excel():
     """Export custom date range report as Excel"""
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
-
+    
     if not start_date_str or not end_date_str:
         return jsonify({'message': 'Both start_date and end_date are required (YYYY-MM-DD)'}), 400
-
+    
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
     except ValueError:
         return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD'}), 400
-
+    
     if start_date > end_date:
         return jsonify({'message': 'Start date must be before or equal to end date'}), 400
-
+    
     tasks = get_tasks_in_date_range(start_date, end_date)
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'custom_report_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}.xlsx'
     sheet_name = f'Report {start_date.strftime("%Y-%m-%d")} to {end_date.strftime("%Y-%m-%d")}'
     return create_excel_response(export_data, filename, sheet_name)
@@ -367,7 +363,6 @@ def all_tasks_csv():
     """Export all tasks as CSV"""
     tasks = Task.query.all()
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'all_tasks_{datetime.utcnow().strftime("%Y%m%d")}.csv'
     return create_csv_response(export_data, filename)
 
@@ -376,7 +371,6 @@ def all_tasks_excel():
     """Export all tasks as Excel"""
     tasks = Task.query.all()
     export_data = [format_task_for_export(task) for task in tasks]
-
     filename = f'all_tasks_{datetime.utcnow().strftime("%Y%m%d")}.xlsx'
     sheet_name = 'All Tasks'
     return create_excel_response(export_data, filename, sheet_name)

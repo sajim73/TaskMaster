@@ -210,8 +210,7 @@ def data_statistics():
         tasks_with_deadlines = Task.query.filter(Task.deadline != None).count()
 
         # Overdue tasks
-        from datetime import datetime
-        today = datetime.utcnow().date()
+        today = datetime.utcnow()
         overdue_tasks = Task.query.filter(
             Task.deadline != None,
             Task.deadline < today,

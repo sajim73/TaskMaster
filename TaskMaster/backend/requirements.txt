@@ -1,1 +1,20 @@
 # Backend requirements
+
+
+# Core Flask dependencies (existing)
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.0.0
+Flask-Migrate>=4.0.0
+
+# Database
+SQLAlchemy>=2.0.0
+
+# Development and testing (if not already included)
+python-dotenv>=1.0.0
+
+# NEW: Export functionality dependencies
+openpyxl>=3.1.0  # For Excel export functionality in enhanced reports
+
+# Optional: Additional useful packages for production
+gunicorn>=21.0.0  # For production deployment
+python-dateutil>=2.8.0  # For enhanced date handling

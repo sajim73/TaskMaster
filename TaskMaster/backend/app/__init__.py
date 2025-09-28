@@ -1,5 +1,4 @@
 # Flask app init
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -10,7 +9,7 @@ migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
-    
+
     # Config
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taskmaster.db'  # Local SQLite
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -26,6 +25,7 @@ def create_app():
     from app.routes.calendar_routes import calendar_bp
     from app.routes.report_routes import report_bp
     from app.routes.settings_routes import settings_bp
+    from app.routes.category_routes import category_bp  # NEW: Category routes
 
     # Register blueprints
     app.register_blueprint(task_bp, url_prefix='/tasks')
@@ -33,6 +33,6 @@ def create_app():
     app.register_blueprint(calendar_bp, url_prefix='/calendar')
     app.register_blueprint(report_bp, url_prefix='/reports')
     app.register_blueprint(settings_bp, url_prefix='/settings')
+    app.register_blueprint(category_bp, url_prefix='/categories')  # NEW: Category routes
 
     return app
-

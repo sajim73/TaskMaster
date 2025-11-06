@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/middleware/auth";
 import { Task } from "@/lib/types";
 import { ObjectId } from "mongodb";
 import { parseDateString } from "@/lib/date-utils";
+import { serializeTask } from "@/lib/serializers/task";
 
 // POST /api/tasks/[id] - Update task
 export async function POST(
@@ -64,11 +65,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      task: {
-        ...result,
-        _id: result._id?.toString(),
-        userId: result.userId.toString(),
-      },
+      task: serializeTask(result),
     });
   } catch (error: any) {
     if (error.message === "Unauthorized") {

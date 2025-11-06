@@ -18,7 +18,7 @@ import { Plus } from "lucide-react";
 import { TaskDialog } from "../tasks/_components/task-dialog";
 import { getCategories } from "@/lib/api/categories";
 import { useToast } from "@/hooks/use-toast";
-import { isSameDate, formatDateString, getFirstDayOfMonth, getLastDayOfMonth } from "@/lib/date-utils";
+import { parseDateString, isSameDate, formatDateString, getFirstDayOfMonth, getLastDayOfMonth } from "@/lib/date-utils";
 import { STATUS_COLORS, PRIORITY_COLORS } from "@/lib/constants";
 
 interface Task {
@@ -28,7 +28,7 @@ interface Task {
   category?: string;
   priority: "low" | "medium" | "high";
   status: "pending" | "completed" | "overdue";
-  dueDate?: string;
+  dueDate?: string | null;
 }
 
 interface Category {
@@ -59,8 +59,10 @@ export default function CalendarPage() {
   useEffect(() => {
     const filtered = allTasks.filter((task) => {
       if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
-      return isSameDate(taskDate, selectedDate);
+        if (!task.dueDate) return false;
+        const taskDate = parseDateString(task.dueDate);
+        if (!taskDate) return false;
+        return isSameDate(taskDate, selectedDate);
     });
     setTasks(filtered);
   }, [selectedDate, allTasks]);
@@ -135,11 +137,12 @@ export default function CalendarPage() {
 
   // Get task count for a specific date
   const getTaskCountForDate = (date: Date): number => {
-    return allTasks.filter((task) => {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
-      return isSameDate(taskDate, date);
-    }).length;
+           return allTasks.filter((task) => {
+             if (!task.dueDate) return false;
+             const taskDate = parseDateString(task.dueDate);
+             if (!taskDate) return false;
+             return isSameDate(taskDate, date);
+           }).length;
   };
 
   const statusBorderColors = {

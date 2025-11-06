@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/middleware/auth";
 import { Task } from "@/lib/types";
 import { ObjectId } from "mongodb";
 import { parseDateString } from "@/lib/date-utils";
+import { serializeTask } from "@/lib/serializers/task";
 
 // GET /api/tasks - List all tasks with filtering, sorting, pagination
 export async function GET(request: NextRequest) {
@@ -78,11 +79,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      tasks: tasks.map((task) => ({
-        ...task,
-        _id: task._id?.toString(),
-        userId: task.userId.toString(),
-      })),
+      tasks: tasks.map((task) => serializeTask(task)),
       pagination: limit ? {
         page,
         limit,
@@ -144,13 +141,14 @@ export async function POST(request: NextRequest) {
 
     const result = await tasksCollection.insertOne(newTask as Task);
 
+    const insertedTask: Task = {
+      ...(newTask as Task),
+      _id: result.insertedId,
+    };
+
     return NextResponse.json({
       success: true,
-      task: {
-        _id: result.insertedId.toString(),
-        ...newTask,
-        userId: newTask.userId.toString(),
-      },
+      task: serializeTask(insertedTask),
     });
   } catch (error: any) {
     if (error.message === "Unauthorized") {

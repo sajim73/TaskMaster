@@ -46,6 +46,17 @@ export function formatDateString(date: Date): string {
 }
 
 /**
+ * Format a Date object to YYYY-MM-DD string using UTC components.
+ * Useful when storing dates as midnight local times that may shift when converted to UTC.
+ */
+export function formatDateStringUTC(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Compare two dates by date only (ignoring time)
  * 
  * @param date1 - First date

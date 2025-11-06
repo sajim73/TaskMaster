@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, ArrowUpDown } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { STATUS_COLORS, PRIORITY_COLORS } from "@/lib/constants";
+import { parseDateString } from "@/lib/date-utils";
 
 export interface Task {
   _id: string;
@@ -14,7 +15,7 @@ export interface Task {
   category?: string;
   priority: "low" | "medium" | "high";
   status: "pending" | "completed" | "overdue";
-  dueDate?: string;
+  dueDate?: string | null;
 }
 
 export interface Category {
@@ -174,9 +175,10 @@ export function getTaskColumns({
         );
       },
       cell: ({ row }) => {
-        const dueDate = row.getValue("dueDate") as string;
-        return dueDate ? (
-          <span>{new Date(dueDate).toLocaleDateString()}</span>
+        const dueDate = row.getValue("dueDate") as string | null;
+        const parsedDate = dueDate ? parseDateString(dueDate) : null;
+        return parsedDate ? (
+          <span>{parsedDate.toLocaleDateString()}</span>
         ) : (
           <span className="text-muted-foreground">-</span>
         );

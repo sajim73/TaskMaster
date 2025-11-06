@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,7 +31,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { getCategoryIcon } from "@/lib/category-icons";
-import { formatDateString } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
+import { formatDateString, parseDateString } from "@/lib/date-utils";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -49,6 +52,75 @@ interface Category {
   name: string;
   icon?: string;
   color?: string;
+}
+
+const displayDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "2-digit",
+  year: "numeric",
+});
+
+interface DueDatePickerProps {
+  value?: string;
+  onChange: (value: string) => void;
+}
+
+function DueDatePicker({ value, onChange }: DueDatePickerProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const parsedDate = value ? parseDateString(value) : null;
+  const date = parsedDate ?? undefined;
+  const displayValue = date ? displayDateFormatter.format(date) : "";
+  const startMonth = new Date(2000, 0, 1);
+  const endMonth = new Date(new Date().getFullYear() + 50, 11, 1);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(event: MouseEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          "w-full justify-start text-left font-normal",
+          !displayValue && "text-muted-foreground"
+        )}
+      >
+        {displayValue || "Select a due date"}
+        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+      </Button>
+      {open ? (
+        <div className="absolute right-0 z-50 mt-2 rounded-md border bg-popover p-0 shadow-md">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(selected) => {
+              if (selected) {
+                onChange(formatDateString(selected));
+              } else {
+                onChange("");
+              }
+              setOpen(false);
+            }}
+            captionLayout="dropdown"
+            startMonth={startMonth}
+            endMonth={endMonth}
+            showOutsideDays={false}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 interface TaskDialogProps {
@@ -246,7 +318,10 @@ export function TaskDialog({
                   <FormItem>
                     <FormLabel>Due Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} value={field.value || ""} />
+                      <DueDatePicker
+                        value={field.value || ""}
+                        onChange={(value) => field.onChange(value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

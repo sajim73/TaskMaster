@@ -76,13 +76,13 @@ export function RecentActivity({ tasks }: RecentActivityProps) {
                   <span>{timeAgo(new Date(task.updatedAt))}</span>
                 </div>
               </div>
-                    <Badge
-                      variant="secondary"
-                      className={
+              <Badge
+                variant="secondary"
+                className={
                         STATUS_COLORS[task.status as keyof typeof STATUS_COLORS] ||
-                        "bg-gray-500/10"
-                      }
-                    >
+                  "bg-gray-500/10"
+                }
+              >
                 {task.status}
               </Badge>
             </div>

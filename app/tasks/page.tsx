@@ -266,7 +266,14 @@ export default function TasksPage() {
           if (!open) setEditingTask(null);
         }}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
-        initialData={editingTask || undefined}
+        initialData={
+          editingTask
+            ? {
+                ...editingTask,
+                dueDate: editingTask.dueDate ?? undefined,
+              }
+            : undefined
+        }
         categories={categories}
         title={editingTask ? "Edit Task" : "Add Task"}
         description={

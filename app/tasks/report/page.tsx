@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +23,7 @@ import type { Task } from "@/app/tasks/_components/task-columns";
 import type { ClientCategory } from "@/lib/types/client";
 import { getCategoryIcon } from "@/lib/category-icons";
 
-export default function TasksReportPage() {
+function ReportContent() {
   const searchParams = useSearchParams();
   const { toastError } = useToast();
   const { isReady, isLoading } = useRequireAuth();
@@ -259,6 +259,14 @@ export default function TasksReportPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TasksReportPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen p-6">Loading report...</div>}>
+      <ReportContent />
+    </Suspense>
   );
 }
 

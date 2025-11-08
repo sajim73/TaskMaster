@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/auth";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { getTaskStats } from "@/lib/api/stats";
-import { getCategories } from "@/lib/api/categories";
 import { StatCard } from "./_components/stat-card";
 import { CategoryChart } from "./_components/category-chart";
 import { StatusChart } from "./_components/status-chart";
 import { RecentActivity } from "./_components/recent-activity";
 import { ListTodo, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { useCategories } from "@/lib/store/categories";
+import { PageShell } from "@/components/page-shell";
 
 interface Stats {
   total: number;
@@ -28,89 +29,60 @@ interface RecentTask {
   updatedAt: string;
 }
 
-interface Category {
-  _id: string;
-  name: string;
-  color?: string;
-}
-
 export default function DashboardPage() {
-  const { isLoading } = useRequireAuth();
+  const { isReady, isLoading } = useRequireAuth();
   const user = useAuthStore((state) => state.user);
+  const { categories, loadCategories } = useCategories();
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [statsResponse, categoriesResponse] = await Promise.all([
-        getTaskStats(),
-        getCategories(),
-      ]);
+      const statsResponse = await getTaskStats();
       
       if (statsResponse.success) {
         setStats(statsResponse.stats);
         setRecentTasks(statsResponse.recentActivity);
-      }
-      
-      if (categoriesResponse.success) {
-        setCategories(categoriesResponse.categories);
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
+    fetchData();
+  }, [isReady, fetchData]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    loadCategories();
+  }, [isReady, loadCategories]);
 
   if (isLoading) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Welcome back, {user?.name || "User"}!</h1>
-        <p className="text-muted-foreground mt-2">
-          Here's an overview of your tasks and productivity
-        </p>
-      </div>
-
+    <PageShell
+      title={`Welcome back, ${user?.name || "User"}!`}
+      description="Here's an overview of your tasks and productivity"
+    >
       {loading ? (
         <div className="text-center py-8 text-muted-foreground">
           Loading dashboard...
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Row 1: Stat Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Total Tasks"
-              value={stats?.total || 0}
-              icon={ListTodo}
-            />
-            <StatCard
-              title="Completed"
-              value={stats?.completed || 0}
-              icon={CheckCircle2}
-            />
-            <StatCard
-              title="Pending"
-              value={stats?.pending || 0}
-              icon={Clock}
-            />
-            <StatCard
-              title="Overdue"
-              value={stats?.overdue || 0}
-              icon={AlertCircle}
-            />
+            <StatCard title="Total Tasks" value={stats?.total || 0} icon={ListTodo} />
+            <StatCard title="Completed" value={stats?.completed || 0} icon={CheckCircle2} />
+            <StatCard title="Pending" value={stats?.pending || 0} icon={Clock} />
+            <StatCard title="Overdue" value={stats?.overdue || 0} icon={AlertCircle} />
           </div>
 
-          {/* Row 2: Charts */}
           <div className="grid gap-4 md:grid-cols-2">
             <CategoryChart data={stats?.byCategory || []} categories={categories} />
             <StatusChart
@@ -120,10 +92,9 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Row 3: Recent Activity */}
           <RecentActivity tasks={recentTasks} />
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

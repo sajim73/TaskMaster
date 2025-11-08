@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { CategoryDialog } from "./_components/category-dialog";
 import { PredefinedCategoriesDialog } from "./_components/predefined-categories-dialog";
-import { getCategories, createCategory, updateCategory, deleteCategory } from "@/lib/api/categories";
+import { createCategory, updateCategory, deleteCategory } from "@/lib/api/categories";
 import {
   Table,
   TableBody,
@@ -14,84 +14,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-
-interface Category {
-  _id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-}
+import { useCategories, useCategoryStatus } from "@/lib/store/categories";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageShell } from "@/components/page-shell";
+import type { ClientCategory } from "@/lib/types/client";
 
 export default function CategoriesPage() {
-  const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useRequireAuth();
+  const { toastSuccess, toastError } = useToast();
+  const { isReady, isLoading } = useRequireAuth();
+  const { categories, loadCategories } = useCategories();
+  const status = useCategoryStatus();
+  const isLoadingCategories = status === "loading";
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [predefinedDialogOpen, setPredefinedDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingCategory, setEditingCategory] = useState<ClientCategory | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCategories();
-    }
-  }, [isAuthenticated]);
-
-  async function fetchCategories() {
-    try {
-      setLoading(true);
-      const response = await getCategories();
-      if (response.success) {
-        setCategories(response.categories);
-      }
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
+    if (!isReady) return;
+    loadCategories({ force: true });
+  }, [isReady, loadCategories]);
 
   async function handleCreateCategory(data: any) {
     try {
       const response = await createCategory(data);
       if (response.success) {
-        toast({ title: "Success", description: "Category created successfully" });
-        fetchCategories();
+        toastSuccess("Category created successfully");
+        await loadCategories({ force: true });
       } else {
-        toast({
-          title: "Error",
-          description: response.error || "Failed to create category",
-          variant: "destructive",
-        });
+        toastError(response.error || "Failed to create category");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create category",
-        variant: "destructive",
-      });
+      toastError("Failed to create category");
     }
   }
 
@@ -101,16 +60,12 @@ export default function CategoriesPage() {
     try {
       const response = await updateCategory(editingCategory._id, data);
       if (response.success) {
-        toast({ title: "Success", description: "Category updated successfully" });
-        fetchCategories();
+        toastSuccess("Category updated successfully");
+        await loadCategories({ force: true });
         setEditingCategory(null);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update category",
-        variant: "destructive",
-      });
+      toastError("Failed to update category");
     }
   }
 
@@ -120,21 +75,13 @@ export default function CategoriesPage() {
     try {
       const response = await deleteCategory(categoryToDelete);
       if (response.success) {
-        toast({ title: "Success", description: "Category deleted successfully" });
-        fetchCategories();
+        toastSuccess("Category deleted successfully");
+        await loadCategories({ force: true });
       } else {
-        toast({
-          title: "Error",
-          description: response.error || "Failed to delete category",
-          variant: "destructive",
-        });
+        toastError(response.error || "Failed to delete category");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete category",
-        variant: "destructive",
-      });
+      toastError("Failed to delete category");
     } finally {
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
@@ -144,15 +91,11 @@ export default function CategoriesPage() {
   if (isLoading) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Categories</h1>
-          <p className="text-muted-foreground mt-2">
-            Organize your tasks with custom categories
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <PageShell
+      title="Categories"
+      description="Organize your tasks with custom categories"
+      headerActions={
+        <>
           <Button variant="outline" onClick={() => setPredefinedDialogOpen(true)}>
             Add Predefined
           </Button>
@@ -160,10 +103,10 @@ export default function CategoriesPage() {
             <Plus className="h-4 w-4 mr-2" />
             New Category
           </Button>
-        </div>
-      </div>
-
-      {loading ? (
+        </>
+      }
+    >
+      {isLoadingCategories ? (
         <div className="border rounded-lg p-8 text-center text-muted-foreground">
           <p>Loading categories...</p>
         </div>
@@ -261,24 +204,16 @@ export default function CategoriesPage() {
         existingCategories={categories.map((c) => c.name.toLowerCase())}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category.
-              You cannot delete a category that has tasks.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCategory}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete category?"
+        description="This action cannot be undone. This will permanently delete the category. You cannot delete a category that has tasks."
+        confirmLabel="Delete"
+        tone="destructive"
+        onConfirm={handleDeleteCategory}
+      />
+    </PageShell>
   );
 }
 

@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { formatDateString, parseDateString } from "@/lib/date-utils";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import type { ClientCategory } from "@/lib/types/client";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -46,13 +47,6 @@ const taskSchema = z.object({
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
-
-interface Category {
-  _id: string;
-  name: string;
-  icon?: string;
-  color?: string;
-}
 
 const displayDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -128,7 +122,7 @@ interface TaskDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: TaskFormValues) => Promise<void>;
   initialData?: Partial<TaskFormValues>;
-  categories: Category[];
+  categories: ClientCategory[];
   title?: string;
   description?: string;
   defaultDueDate?: Date;

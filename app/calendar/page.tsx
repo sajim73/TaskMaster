@@ -1,9 +1,8 @@
 "use client";
 
-  import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -16,49 +15,28 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { getTasks, createTask, updateTask } from "@/lib/api/tasks";
 import { Plus } from "lucide-react";
 import { TaskDialog } from "../tasks/_components/task-dialog";
-import { getCategories } from "@/lib/api/categories";
 import { useToast } from "@/hooks/use-toast";
 import { parseDateString, isSameDate, formatDateString, getFirstDayOfMonth, getLastDayOfMonth } from "@/lib/date-utils";
-import { STATUS_COLORS, PRIORITY_COLORS } from "@/lib/constants";
-
-interface Task {
-  _id: string;
-  title: string;
-  description?: string;
-  category?: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "completed" | "overdue";
-  dueDate?: string | null;
-}
-
-interface Category {
-  _id: string;
-  name: string;
-  color?: string;
-  icon?: string;
-}
+import { STATUS_COLORS } from "@/lib/constants";
+import { useCategories } from "@/lib/store/categories";
+import { PageShell } from "@/components/page-shell";
+import type { ClientTask } from "@/lib/types/client";
 
 export default function CalendarPage() {
-  const { isLoading } = useRequireAuth();
-  const { toast } = useToast();
+  const { isReady, isLoading } = useRequireAuth();
+  const { toastSuccess, toastError } = useToast();
+  const { categories, loadCategories } = useCategories();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [displayedMonth, setDisplayedMonth] = useState<Date>(new Date());
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<ClientTask[]>([]);
+  const [allTasks, setAllTasks] = useState<ClientTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [monthJustChanged, setMonthJustChanged] = useState(false);
 
-  // Fetch tasks when displayed month changes
-  useEffect(() => {
-    fetchData();
-  }, [displayedMonth]);
-
   // Filter tasks for selected date whenever allTasks or selectedDate changes
   useEffect(() => {
     const filtered = allTasks.filter((task) => {
-      if (!task.dueDate) return false;
         if (!task.dueDate) return false;
         const taskDate = parseDateString(task.dueDate);
         if (!taskDate) return false;
@@ -67,7 +45,39 @@ export default function CalendarPage() {
     setTasks(filtered);
   }, [selectedDate, allTasks]);
 
-  async function fetchData() {
+  const selectSmartDate = useCallback((month: Date, tasksData: ClientTask[]) => {
+    const today = new Date();
+    const firstDay = getFirstDayOfMonth(month);
+
+    if (
+      today.getMonth() === month.getMonth() &&
+      today.getFullYear() === month.getFullYear()
+    ) {
+      setSelectedDate(today);
+      return;
+    }
+
+    const tasksInMonth = tasksData.filter((task) => {
+      if (!task.dueDate) return false;
+      const taskDate = new Date(task.dueDate);
+      return (
+        taskDate.getMonth() === month.getMonth() &&
+        taskDate.getFullYear() === month.getFullYear()
+      );
+    });
+
+    if (tasksInMonth.length > 0) {
+      tasksInMonth.sort(
+        (a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
+      );
+      setSelectedDate(new Date(tasksInMonth[0].dueDate!));
+      return;
+    }
+
+    setSelectedDate(firstDay);
+  }, []);
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -75,13 +85,10 @@ export default function CalendarPage() {
       const monthStart = getFirstDayOfMonth(displayedMonth);
       const monthEnd = getLastDayOfMonth(displayedMonth);
 
-      const [tasksResponse, categoriesResponse] = await Promise.all([
-        getTasks({
+      const tasksResponse = await getTasks({
           startDate: formatDateString(monthStart),
           endDate: formatDateString(monthEnd),
-        }),
-        getCategories(),
-      ]);
+      });
 
       if (tasksResponse.success) {
         setAllTasks(tasksResponse.tasks);
@@ -93,47 +100,22 @@ export default function CalendarPage() {
         }
       }
 
-      if (categoriesResponse.success) {
-        setCategories(categoriesResponse.categories);
-      }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
-  }
+  }, [displayedMonth, monthJustChanged, selectSmartDate]);
 
-  function selectSmartDate(month: Date, tasksData: Task[]) {
-    const today = new Date();
-    const firstDay = getFirstDayOfMonth(month);
+  useEffect(() => {
+    if (!isReady) return;
+    fetchData();
+  }, [fetchData, isReady]);
 
-    // 1. If current day is within the month, select it
-    if (today.getMonth() === month.getMonth() && 
-        today.getFullYear() === month.getFullYear()) {
-      setSelectedDate(today);
-      return;
-    }
-
-    // 2. Otherwise, find first day with tasks in this month
-    const tasksInMonth = tasksData.filter((task) => {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
-      return taskDate.getMonth() === month.getMonth() &&
-             taskDate.getFullYear() === month.getFullYear();
-    });
-
-    if (tasksInMonth.length > 0) {
-      // Sort by date and select the first one
-      tasksInMonth.sort((a, b) => 
-        new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
-      );
-      setSelectedDate(new Date(tasksInMonth[0].dueDate!));
-      return;
-    }
-
-    // 3. If no tasks, select first day of month
-    setSelectedDate(firstDay);
-  }
+  useEffect(() => {
+    if (!isReady) return;
+    loadCategories();
+  }, [isReady, loadCategories]);
 
   // Get task count for a specific date
   const getTaskCountForDate = (date: Date): number => {
@@ -154,17 +136,10 @@ export default function CalendarPage() {
   async function handleCreateTask(data: any) {
     const response = await createTask(data);
     if (response.success) {
-      toast({
-        title: "Task created",
-        description: "Your task has been created successfully",
-      });
+      toastSuccess("Your task has been created successfully", "Task created");
       fetchData();
     } else {
-      toast({
-        title: "Error",
-        description: response.error || "Failed to create task",
-        variant: "destructive",
-      });
+      toastError(response.error || "Failed to create task");
     }
   }
 
@@ -173,30 +148,22 @@ export default function CalendarPage() {
       status: newStatus as "pending" | "completed" | "overdue"
     });
     if (response.success) {
-      toast({
-        title: "Status updated",
-        description: "Task status has been updated",
-      });
+      toastSuccess("Task status has been updated", "Status updated");
       fetchData();
     } else {
-      toast({
-        title: "Error",
-        description: response.error || "Failed to update status",
-        variant: "destructive",
-      });
+      toastError(response.error || "Failed to update status");
     }
   }
 
   if (isLoading) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Calendar</h1>
-        <p className="text-muted-foreground mt-2">View and manage tasks by date</p>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-6 items-start">
+    <PageShell
+      title="Calendar"
+      description="View and manage tasks by date"
+      headerClassName="gap-2 md:gap-4"
+    >
+      <div className="flex flex-col gap-6 md:flex-row md:items-start">
         {/* Calendar */}
         <Card className="md:w-auto">
           <CardContent className="flex justify-center">
@@ -206,9 +173,10 @@ export default function CalendarPage() {
               onSelect={(date) => {
                 if (date) {
                   setSelectedDate(date);
-                  // Only update displayedMonth if we're switching to a different month
-                  if (date.getMonth() !== displayedMonth.getMonth() || 
-                      date.getFullYear() !== displayedMonth.getFullYear()) {
+                  if (
+                    date.getMonth() !== displayedMonth.getMonth() ||
+                    date.getFullYear() !== displayedMonth.getFullYear()
+                  ) {
                     setDisplayedMonth(date);
                   }
                 }
@@ -231,14 +199,22 @@ export default function CalendarPage() {
                   const taskCount = getTaskCountForDate(day.date);
                   const isSelected = modifiers.selected;
                   return (
-                    <CalendarDayButton 
-                      day={day} 
-                      modifiers={modifiers} 
+                    <CalendarDayButton
+                      day={day}
+                      modifiers={modifiers}
                       {...props}
-                      className={isSelected ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : ""}
+                      className={
+                        isSelected
+                          ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                          : ""
+                      }
                     >
                       {children}
-                      <span className={`text-xs h-4 font-medium ${isSelected ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                      <span
+                        className={`text-xs h-4 font-medium ${
+                          isSelected ? "text-primary-foreground" : "text-muted-foreground"
+                        }`}
+                      >
                         {taskCount > 0 ? `${taskCount} ${taskCount === 1 ? "task" : "tasks"}` : " "}
                       </span>
                     </CalendarDayButton>
@@ -252,8 +228,8 @@ export default function CalendarPage() {
         {/* Tasks */}
         <Card className="flex-1 flex flex-col">
           <CardHeader className="flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="space-y-1.5">
                 <CardTitle>
                   {selectedDate.toLocaleDateString("en-US", {
                     month: "short",
@@ -262,12 +238,12 @@ export default function CalendarPage() {
                   })}
                 </CardTitle>
                 {!loading && tasks.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground">
                     {tasks.length} task{tasks.length !== 1 ? "s" : ""}
                   </p>
                 )}
               </div>
-              <Button size="sm" onClick={() => setTaskDialogOpen(true)}>
+              <Button onClick={() => setTaskDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Task
               </Button>
@@ -340,7 +316,7 @@ export default function CalendarPage() {
         title="Add Task"
         description="Create a task for the selected date"
       />
-    </div>
+    </PageShell>
   );
 }
 

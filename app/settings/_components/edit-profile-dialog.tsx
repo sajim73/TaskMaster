@@ -45,7 +45,7 @@ export function EditProfileDialog({
   currentName,
   currentEmail,
 }: EditProfileDialogProps) {
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
   const setUser = useAuthStore((state) => state.setUser);
 
   const form = useForm<ProfileFormValues>({
@@ -70,21 +70,13 @@ export function EditProfileDialog({
       const response = await updateProfile(data);
       if (response.success && response.user) {
         setUser(response.user);
-        toast({ title: "Success", description: "Profile updated successfully" });
+        toastSuccess("Profile updated successfully");
         onOpenChange(false);
       } else {
-        toast({
-          title: "Error",
-          description: response.error || "Failed to update profile",
-          variant: "destructive",
-        });
+        toastError(response.error || "Failed to update profile");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
+      toastError("Failed to update profile");
     }
   }
 

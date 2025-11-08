@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth";
 
@@ -13,6 +13,16 @@ export function useRequireAuth() {
     }
   }, [hasHydrated, isAuthenticated, router]);
 
-  return { isAuthenticated, hasHydrated, isLoading: !hasHydrated };
+  const isReady = useMemo(
+    () => hasHydrated && isAuthenticated,
+    [hasHydrated, isAuthenticated]
+  );
+
+  return {
+    isAuthenticated,
+    hasHydrated,
+    isReady,
+    isLoading: !hasHydrated,
+  };
 }
 

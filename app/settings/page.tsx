@@ -11,22 +11,14 @@ import { EditProfileDialog } from "./_components/edit-profile-dialog";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { resetDemoData } from "@/lib/api/test";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageShell } from "@/components/page-shell";
 
 export default function SettingsPage() {
   const { isLoading } = useRequireAuth();
   const user = useAuthStore((state) => state.user);
   const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
+  const { toastSuccess, toastError } = useToast();
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -38,25 +30,17 @@ export default function SettingsPage() {
       setConfirmDialogOpen(false);
       const response = await resetDemoData();
       if (response.success) {
-        toast({
-          title: "Demo data loaded",
-          description: `Created ${response.stats.tasksCreated} tasks and ${response.stats.categoriesCreated} categories`,
-        });
+        toastSuccess(
+          `Created ${response.stats.tasksCreated} tasks and ${response.stats.categoriesCreated} categories`,
+          "Demo data loaded"
+        );
         // Redirect to tasks page to see the demo data
         router.push("/tasks");
       } else {
-        toast({
-          title: "Error",
-          description: response.error || "Failed to reset demo data",
-          variant: "destructive",
-        });
+        toastError(response.error || "Failed to reset demo data");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to reset demo data",
-        variant: "destructive",
-      });
+      toastError("Failed to reset demo data");
     } finally {
       setResetting(false);
     }
@@ -65,14 +49,10 @@ export default function SettingsPage() {
   if (isLoading) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your account and application preferences
-        </p>
-      </div>
-
+    <PageShell
+      title="Settings"
+      description="Manage your account and application preferences"
+    >
       <div className="space-y-8 max-w-2xl">
         {/* Appearance */}
         <div>
@@ -144,24 +124,15 @@ export default function SettingsPage() {
         currentEmail={user?.email || ""}
       />
 
-      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete all your existing tasks and categories,
-              and replace them with demo data. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetDemo}>
-              Load Demo Data
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Load demo data?"
+        description="This will permanently delete all your existing tasks and categories, and replace them with demo data. This action cannot be undone."
+        confirmLabel="Load Demo Data"
+        onConfirm={handleResetDemo}
+      />
+    </PageShell>
   );
 }
 

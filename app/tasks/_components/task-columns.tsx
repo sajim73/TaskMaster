@@ -7,23 +7,10 @@ import { Pencil, Trash2, ArrowUpDown } from "lucide-react";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { STATUS_COLORS, PRIORITY_COLORS } from "@/lib/constants";
 import { parseDateString } from "@/lib/date-utils";
+import type { ClientTask, ClientCategory } from "@/lib/types/client";
 
-export interface Task {
-  _id: string;
-  title: string;
-  description?: string;
-  category?: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "completed" | "overdue";
-  dueDate?: string | null;
-}
-
-export interface Category {
-  _id: string;
-  name: string;
-  icon?: string;
-  color?: string;
-}
+export type Task = ClientTask;
+export type Category = ClientCategory;
 
 interface TaskColumnsProps {
   categories: Category[];

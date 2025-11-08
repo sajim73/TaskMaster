@@ -5,12 +5,12 @@ type ToastTone = "default" | "destructive";
 
 function notify({
   tone = "default",
-  title,
-  description,
-}: {
+      title,
+      description,
+    }: {
   tone?: ToastTone;
-  title?: string;
-  description?: string;
+      title?: string;
+      description?: string;
 }) {
   if (tone === "destructive") {
     sonnerToast.error(title || "Error", { description });

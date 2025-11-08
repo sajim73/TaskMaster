@@ -199,9 +199,9 @@ export default function CalendarPage() {
                   const taskCount = getTaskCountForDate(day.date);
                   const isSelected = modifiers.selected;
                   return (
-                    <CalendarDayButton
-                      day={day}
-                      modifiers={modifiers}
+                    <CalendarDayButton 
+                      day={day} 
+                      modifiers={modifiers} 
                       {...props}
                       className={
                         isSelected

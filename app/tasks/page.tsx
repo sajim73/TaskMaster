@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState, useDeferredValue } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Download, Printer } from "lucide-react";
 import { TaskDialog } from "./_components/task-dialog";
 import { getTasks, createTask, updateTask, deleteTask } from "@/lib/api/tasks";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +16,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useCategories } from "@/lib/store/categories";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageShell } from "@/components/page-shell";
+import { useTaskReport } from "@/hooks/use-task-report";
 
 export default function TasksPage() {
   const { toastSuccess, toastError } = useToast();
@@ -39,6 +43,31 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const {
+    startDate: reportStartDate,
+    endDate: reportEndDate,
+    setStartDate: setReportStartDate,
+    setEndDate: setReportEndDate,
+    downloadCsv,
+    downloadingCsv,
+  } = useTaskReport();
+
+  const handlePrintReport = useCallback(() => {
+    if (!reportStartDate || !reportEndDate) {
+      toastError("Select both start and end dates");
+      return;
+    }
+
+    if (new Date(reportStartDate) > new Date(reportEndDate)) {
+      toastError("Start date must be before end date");
+      return;
+    }
+
+    window.open(
+      `/tasks/report?start=${reportStartDate}&end=${reportEndDate}`,
+      "_blank"
+    );
+  }, [reportEndDate, reportStartDate, toastError]);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -208,6 +237,54 @@ export default function TasksPage() {
         loading={loading}
         totalCount={totalTasks}
       />
+
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>Generate Report</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="report-start">Start date</Label>
+              <Input
+                id="report-start"
+                type="date"
+                value={reportStartDate}
+                onChange={(event) => setReportStartDate(event.target.value)}
+                max={reportEndDate || undefined}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="report-end">End date</Label>
+              <Input
+                id="report-end"
+                type="date"
+                value={reportEndDate}
+                onChange={(event) => setReportEndDate(event.target.value)}
+                min={reportStartDate || undefined}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button
+              className="w-full sm:w-auto"
+              onClick={downloadCsv}
+              disabled={downloadingCsv}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {downloadingCsv ? "Preparing..." : "Download CSV"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={handlePrintReport}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print Report
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <TaskDialog
         open={dialogOpen}

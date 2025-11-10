@@ -29,7 +29,7 @@ export function Navbar() {
 
   return (
     <nav className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4 relative">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-2 md:gap-4 relative">
         {/* Mobile Menu - Only show when authenticated */}
         {isAuthenticated && (
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -97,7 +97,7 @@ export function Navbar() {
         )}
 
         {/* Auth Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 ml-auto">
           <ThemeToggle />
           {isAuthenticated ? (
             <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -109,7 +109,7 @@ export function Navbar() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" className="hidden sm:inline-flex" asChild>
                 <Link href="/register">Register</Link>
               </Button>
             </>

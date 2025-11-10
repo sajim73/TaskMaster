@@ -14,7 +14,7 @@ import {
   Target,
   Zap,
   Shield,
-  Sparkles
+  ChartNoAxesCombined
 } from "lucide-react";
 
 export default function Home() {
@@ -34,13 +34,13 @@ export default function Home() {
     {
       icon: Calendar,
       title: "Calendar View",
-      description: "Visualize tasks by due date with monthly and weekly views. Click on any date to manage tasks for that day.",
+      description: "Visualize tasks by due date on an interactive calendar. Click on any date to manage tasks for that day.",
       color: "text-green-500"
     },
     {
       icon: BarChart3,
       title: "Reports & Analytics",
-      description: "Generate detailed activity reports, export data, and monitor your weekly and monthly productivity trends.",
+      description: "Generate detailed activity reports and monitor your productivity trends at a glance.",
       color: "text-orange-500"
     },
     {
@@ -52,7 +52,7 @@ export default function Home() {
     {
       icon: Settings,
       title: "Customizable Settings",
-      description: "Personalize your experience with theme customization, notification preferences, and data management options.",
+      description: "Tune your theme and personalize your account to meet your needs.",
       color: "text-indigo-500"
     }
   ];
@@ -76,7 +76,7 @@ export default function Home() {
     {
       icon: Shield,
       title: "Never Forget",
-      description: "Smart reminders and notifications keep you on track"
+      description: "Stay on schedule with clear status indicators and calendar highlights"
     }
   ];
 
@@ -86,28 +86,27 @@ export default function Home() {
       <section className="container mx-auto px-4 pt-12 pb-20 md:pt-20 md:pb-32">
         <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
           <Badge variant="secondary" className="px-4 py-2">
-            <Sparkles className="w-3 h-3 mr-1" />
-            Your Productivity Partner
+            <ChartNoAxesCombined className="w-3 h-3 mr-1" />
+            Your Productivity Tool for Success
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
             Master Your Tasks,
             <br />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-clip-text text-transparent gradient-shine" data-text="Achieve Your Goals">
               Achieve Your Goals
             </span>
           </h1>
           
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-            TaskMaster is a comprehensive task management system designed to help you handle tasks, 
-            track progress, and gain insights through powerful dashboards and reports.
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl">
+            TaskMaster is a comprehensive task management system designed to help you handle tasks
+            efficiently and achieve your goals faster.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Button size="lg" className="text-lg px-8" asChild>
               <Link href="/register">
                 Get Started
-                <CheckCircle2 className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8" asChild>
@@ -120,15 +119,15 @@ export default function Home() {
           <div className="flex flex-wrap justify-center gap-8 pt-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span>No credit card required</span>
+              <span>Dashboard insights</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span>Free forever</span>
+              <span>Calendar views</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span>Setup in minutes</span>
+              <span>Exports and reports</span>
             </div>
           </div>
         </div>

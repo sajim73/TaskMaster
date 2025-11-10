@@ -29,7 +29,7 @@ export function Navbar() {
 
   return (
     <nav className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4 relative">
         {/* Mobile Menu - Only show when authenticated */}
         {isAuthenticated && (
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -67,7 +67,10 @@ export function Navbar() {
         )}
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link
+          href="/"
+          className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
+        >
           <CheckCircle2 className="h-6 w-6 text-primary" />
           <span className="font-bold text-xl">TaskMaster</span>
         </Link>

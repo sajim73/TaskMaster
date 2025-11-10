@@ -37,7 +37,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Navbar />
-        {children}
+          <main className="min-h-app-content">
+            {children}
+          </main>
           <Toaster />
         </ThemeProvider>
       </body>

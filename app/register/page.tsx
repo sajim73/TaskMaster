@@ -52,7 +52,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div className="flex min-h-full items-center justify-center px-4 py-6">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Register</CardTitle>

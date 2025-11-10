@@ -107,7 +107,7 @@ function ReportContent() {
 
     return tasks.reduce((acc, task) => {
       acc[task.status] += 1;
-      return acc;
+        return acc;
     }, initialCounts);
   }, [tasks]);
 

@@ -5,7 +5,12 @@ import { Task } from "@/lib/types";
 import { ObjectId, type Filter } from "mongodb";
 import { parseDateString } from "@/lib/date-utils";
 import { serializeTask } from "@/lib/serializers/task";
-import type { TaskPriority, TaskStatus } from "@/lib/types/shared";
+import {
+  isTaskPriority,
+  isTaskStatus,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/types/shared";
 
 // POST /api/tasks/[id] - Update task
 export async function POST(
@@ -54,8 +59,8 @@ export async function POST(
     }
 
     const filter: Filter<Task> = {
-      _id: new ObjectId(taskId),
-      userId: new ObjectId(user.userId),
+        _id: new ObjectId(taskId),
+        userId: new ObjectId(user.userId),
     };
 
     const result = await tasksCollection.findOneAndUpdate(filter, { $set: updateFields }, {
@@ -80,14 +85,6 @@ export async function POST(
       { status: 500 }
     );
   }
-}
-
-function isTaskPriority(value: unknown): value is TaskPriority {
-  return value === "low" || value === "medium" || value === "high";
-}
-
-function isTaskStatus(value: unknown): value is TaskStatus {
-  return value === "pending" || value === "completed" || value === "overdue";
 }
 
 // DELETE /api/tasks/[id] - Delete task

@@ -5,7 +5,12 @@ import { Task } from "@/lib/types";
 import { ObjectId, type Document, type Filter } from "mongodb";
 import { parseDateString } from "@/lib/date-utils";
 import { serializeTask } from "@/lib/serializers/task";
-import type { TaskPriority, TaskStatus } from "@/lib/types/shared";
+import {
+  isTaskPriority,
+  isTaskStatus,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/types/shared";
 
 // GET /api/tasks - List all tasks with filtering, sorting, pagination
 export async function GET(request: NextRequest) {
@@ -177,14 +182,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-function isTaskPriority(value: string | null): value is TaskPriority {
-  return value === "low" || value === "medium" || value === "high";
-}
-
-function isTaskStatus(value: string | null): value is TaskStatus {
-  return value === "pending" || value === "completed" || value === "overdue";
-}
-
-
 

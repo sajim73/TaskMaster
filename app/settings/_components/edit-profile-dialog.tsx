@@ -68,13 +68,14 @@ export function EditProfileDialog({
   async function onSubmit(data: ProfileFormValues) {
     try {
       const response = await updateProfile(data);
-      if (response.success && response.user) {
-        setUser(response.user);
-        toastSuccess("Profile updated successfully");
-        onOpenChange(false);
-      } else {
+      if (!response.success) {
         toastError(response.error || "Failed to update profile");
+        return;
       }
+
+      setUser(response.user);
+      toastSuccess("Profile updated successfully");
+      onOpenChange(false);
     } catch (error) {
       toastError("Failed to update profile");
     }

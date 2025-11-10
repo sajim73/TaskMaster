@@ -100,7 +100,7 @@ function DueDatePicker({ value, onChange }: DueDatePickerProps) {
         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
       </Button>
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 rounded-md border bg-popover p-0 shadow-md">
+        <div className="absolute right-0 bottom-full z-50 mb-2 overflow-hidden rounded-md border border-border bg-popover p-0 shadow-md">
           <Calendar
             mode="single"
             selected={date}

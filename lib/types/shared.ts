@@ -24,5 +24,13 @@ export function formatTaskStatus(status: TaskStatus): string {
   return TASK_STATUS_LABELS[status];
 }
 
+export function isTaskPriority(value: unknown): value is TaskPriority {
+  return typeof value === "string" && TASK_PRIORITIES.includes(value as TaskPriority);
+}
+
+export function isTaskStatus(value: unknown): value is TaskStatus {
+  return typeof value === "string" && TASK_STATUSES.includes(value as TaskStatus);
+}
+
 export type ThemePreference = "light" | "dark" | "system";
 

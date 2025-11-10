@@ -96,13 +96,13 @@ export default function CalendarPage() {
       const monthEnd = getLastDayOfMonth(displayedMonth);
 
       const tasksResponse = await getTasks({
-        startDate: formatDateString(monthStart),
-        endDate: formatDateString(monthEnd),
+          startDate: formatDateString(monthStart),
+          endDate: formatDateString(monthEnd),
       });
 
       if (tasksResponse.success) {
         setAllTasks(tasksResponse.tasks);
-
+        
         // After loading tasks, run smart date selection if month was changed via dropdown
         if (monthJustChanged) {
           selectSmartDate(displayedMonth, tasksResponse.tasks);

@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/middleware/auth";
 import { Task } from "@/lib/types";
 import { ObjectId } from "mongodb";
 import { serializeTask } from "@/lib/serializers/task";
-import type { TaskPriority } from "@/lib/types/shared";
+import { isTaskPriority } from "@/lib/types/shared";
 
 // GET /api/tasks/stats - Get task statistics for dashboard
 export async function GET(request: NextRequest) {
@@ -87,10 +87,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-function isTaskPriority(value: unknown): value is TaskPriority {
-  return value === "low" || value === "medium" || value === "high";
-}
-
-
 

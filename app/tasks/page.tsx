@@ -132,8 +132,8 @@ export default function TasksPage() {
       if (response.success) {
         setTasks(response.tasks);
         if ("page" in response.pagination) {
-          setTotalPages(response.pagination.totalPages);
-          setTotalTasks(response.pagination.total);
+        setTotalPages(response.pagination.totalPages);
+        setTotalTasks(response.pagination.total);
         } else {
           setTotalPages(1);
           setTotalTasks(response.pagination.total);

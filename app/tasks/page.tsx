@@ -6,17 +6,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Download, Printer } from "lucide-react";
-import { TaskDialog } from "./_components/task-dialog";
-import { getTasks, createTask, updateTask, deleteTask } from "@/lib/api/tasks";
+import { TaskDialog, TaskFormValues } from "./_components/task-dialog";
+import {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  type TaskData,
+  type TaskFilters,
+} from "@/lib/api/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/data-table/data-table";
 import { getTaskColumns, Task } from "./_components/task-columns";
-import { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+import { ColumnFiltersState, SortingState, PaginationState } from "@tanstack/react-table";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useCategories } from "@/lib/store/categories";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageShell } from "@/components/page-shell";
 import { useTaskReport } from "@/hooks/use-task-report";
+import {
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+  TASK_PRIORITY_LABELS,
+  TASK_STATUS_LABELS,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/types/shared";
+
+const STATUS_FILTER_OPTIONS = TASK_STATUSES.map((status) => ({
+  label: TASK_STATUS_LABELS[status],
+  value: status,
+}));
+
+const PRIORITY_FILTER_OPTIONS = TASK_PRIORITIES.map((priority) => ({
+  label: TASK_PRIORITY_LABELS[priority],
+  value: priority,
+}));
 
 export default function TasksPage() {
   const { toastSuccess, toastError } = useToast();
@@ -29,7 +54,7 @@ export default function TasksPage() {
   const [totalTasks, setTotalTasks] = useState(0);
 
   // Table state
-  const [pagination, setPagination] = useState({
+  const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 20,
   });
@@ -74,32 +99,50 @@ export default function TasksPage() {
       setLoading(true);
 
       // Build query params
-      const params: any = {
+      const filters: TaskFilters = {
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
       };
 
       // Add sorting
       if (sorting.length > 0) {
-        params.sortBy = sorting[0].id;
-        params.sortOrder = sorting[0].desc ? "desc" : "asc";
+        filters.sortBy = sorting[0].id;
+        filters.sortOrder = sorting[0].desc ? "desc" : "asc";
       }
 
       // Add global search
       if (deferredGlobalFilter) {
-        params.search = deferredGlobalFilter;
+        filters.search = deferredGlobalFilter;
       }
 
       // Add column filters
       columnFilters.forEach((filter) => {
-        params[filter.id] = filter.value;
+        if (!filter.value) return;
+
+        if (filter.id === "status") {
+          filters.status = filter.value as TaskStatus;
+        } else if (filter.id === "priority") {
+          filters.priority = filter.value as TaskPriority;
+        } else if (filter.id === "category") {
+          filters.category = filter.value as string;
+        }
       });
 
-      const response = await getTasks(params);
+      const response = await getTasks(filters);
       if (response.success) {
         setTasks(response.tasks);
-        setTotalPages(response.pagination.totalPages);
-        setTotalTasks(response.pagination.total);
+        if ("page" in response.pagination) {
+          setTotalPages(response.pagination.totalPages);
+          setTotalTasks(response.pagination.total);
+        } else {
+          setTotalPages(1);
+          setTotalTasks(response.pagination.total);
+        }
+      } else {
+        toastError(response.error || "Failed to load tasks");
+        setTasks([]);
+        setTotalPages(0);
+        setTotalTasks(0);
       }
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
@@ -126,27 +169,39 @@ export default function TasksPage() {
     fetchTasks();
   }, [fetchTasks, isReady]);
 
-  async function handleCreateTask(data: any) {
+  async function handleCreateTask(data: TaskFormValues) {
     try {
-      const response = await createTask(data);
+      const payload: TaskData = {
+        ...data,
+        dueDate: data.dueDate ? data.dueDate : undefined,
+      };
+      const response = await createTask(payload);
       if (response.success) {
         toastSuccess("Task created successfully");
         fetchTasks();
+      } else {
+        toastError(response.error || "Failed to create task");
       }
     } catch (error) {
       toastError("Failed to create task");
     }
   }
 
-  async function handleUpdateTask(data: any) {
+  async function handleUpdateTask(data: TaskFormValues) {
     if (!editingTask) return;
 
     try {
-      const response = await updateTask(editingTask._id, data);
+      const payload: Partial<TaskData> = {
+        ...data,
+        dueDate: data.dueDate ? data.dueDate : undefined,
+      };
+      const response = await updateTask(editingTask._id, payload);
       if (response.success) {
         toastSuccess("Task updated successfully");
         fetchTasks();
         setEditingTask(null);
+      } else {
+        toastError(response.error || "Failed to update task");
       }
     } catch (error) {
       toastError("Failed to update task");
@@ -161,6 +216,8 @@ export default function TasksPage() {
       if (response.success) {
         toastSuccess("Task deleted successfully");
         fetchTasks();
+      } else {
+        toastError(response.error || "Failed to delete task");
       }
     } catch (error) {
       toastError("Failed to delete task");
@@ -190,16 +247,8 @@ export default function TasksPage() {
   // Prepare filter options
   const filterOptions = useMemo(
     () => ({
-      statuses: [
-        { label: "Pending", value: "pending" },
-        { label: "Completed", value: "completed" },
-        { label: "Overdue", value: "overdue" },
-      ],
-      priorities: [
-        { label: "Low", value: "low" },
-        { label: "Medium", value: "medium" },
-        { label: "High", value: "high" },
-      ],
+      statuses: STATUS_FILTER_OPTIONS,
+      priorities: PRIORITY_FILTER_OPTIONS,
       categories: categories.map((cat) => ({
         label: cat.name,
         value: cat.name,
@@ -296,7 +345,11 @@ export default function TasksPage() {
         initialData={
           editingTask
             ? {
-                ...editingTask,
+                title: editingTask.title,
+                description: editingTask.description || "",
+                category: editingTask.category || "",
+                priority: editingTask.priority,
+                status: editingTask.status,
                 dueDate: editingTask.dueDate ?? undefined,
               }
             : undefined

@@ -61,10 +61,15 @@ export async function POST(request: NextRequest) {
         email: result.email,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating profile:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Internal server error",
+      },
       { status: 500 }
     );
   }

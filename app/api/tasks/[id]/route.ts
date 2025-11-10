@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import { requireAuth } from "@/lib/middleware/auth";
 import { Task } from "@/lib/types";
-import { ObjectId } from "mongodb";
+import { ObjectId, type Filter } from "mongodb";
 import { parseDateString } from "@/lib/date-utils";
 import { serializeTask } from "@/lib/serializers/task";
+import type { TaskPriority, TaskStatus } from "@/lib/types/shared";
 
 // POST /api/tasks/[id] - Update task
 export async function POST(
@@ -22,42 +23,44 @@ export async function POST(
 
     const { title, description, category, priority, status, dueDate } = body;
 
-    if (priority && !["low", "medium", "high"].includes(priority)) {
-      return NextResponse.json(
-        { error: "Invalid priority" },
-        { status: 400 }
-      );
-    }
-
-    if (status && !["pending", "completed", "overdue"].includes(status)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-    }
-
     const db = await getDatabase();
     const tasksCollection = db.collection<Task>("tasks");
 
     // Build update object
-    const updateFields: any = {
+    const updateFields: Partial<Task> = {
       updatedAt: new Date(),
     };
 
     if (title !== undefined) updateFields.title = title;
     if (description !== undefined) updateFields.description = description;
     if (category !== undefined) updateFields.category = category;
-    if (priority !== undefined) updateFields.priority = priority;
-    if (status !== undefined) updateFields.status = status;
+    if (priority !== undefined) {
+      if (!isTaskPriority(priority)) {
+        return NextResponse.json(
+          { error: "Invalid priority" },
+          { status: 400 }
+        );
+      }
+      updateFields.priority = priority;
+    }
+    if (status !== undefined) {
+      if (!isTaskStatus(status)) {
+        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+      }
+      updateFields.status = status;
+    }
     if (dueDate !== undefined) {
-      updateFields.dueDate = dueDate ? parseDateString(dueDate) : null;
+      updateFields.dueDate = dueDate ? parseDateString(dueDate) ?? null : null;
     }
 
-    const result = await tasksCollection.findOneAndUpdate(
-      {
-        _id: new ObjectId(taskId),
-        userId: new ObjectId(user.userId),
-      },
-      { $set: updateFields },
-      { returnDocument: "after" }
-    );
+    const filter: Filter<Task> = {
+      _id: new ObjectId(taskId),
+      userId: new ObjectId(user.userId),
+    };
+
+    const result = await tasksCollection.findOneAndUpdate(filter, { $set: updateFields }, {
+      returnDocument: "after",
+    });
 
     if (!result) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -67,8 +70,8 @@ export async function POST(
       success: true,
       task: serializeTask(result),
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Update task error:", error);
@@ -77,6 +80,14 @@ export async function POST(
       { status: 500 }
     );
   }
+}
+
+function isTaskPriority(value: unknown): value is TaskPriority {
+  return value === "low" || value === "medium" || value === "high";
+}
+
+function isTaskStatus(value: unknown): value is TaskStatus {
+  return value === "pending" || value === "completed" || value === "overdue";
 }
 
 // DELETE /api/tasks/[id] - Delete task
@@ -108,8 +119,8 @@ export async function DELETE(
       success: true,
       message: "Task deleted successfully",
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Delete task error:", error);

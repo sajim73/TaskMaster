@@ -8,6 +8,7 @@ import { getCategoryIcon } from "@/lib/category-icons";
 import { STATUS_COLORS, PRIORITY_COLORS } from "@/lib/constants";
 import { parseDateString } from "@/lib/date-utils";
 import type { ClientTask, ClientCategory } from "@/lib/types/client";
+import type { TaskPriority, TaskStatus } from "@/lib/types/shared";
 
 export type Task = ClientTask;
 export type Category = ClientCategory;
@@ -100,12 +101,12 @@ export function getTaskColumns({
         );
       },
       cell: ({ row }) => {
-        const priority = row.getValue("priority") as string;
+        const priority = row.getValue("priority") as TaskPriority;
         return (
           <Badge
             variant="secondary"
             className={
-              PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] ||
+              PRIORITY_COLORS[priority] ||
               "bg-gray-500/10"
             }
           >
@@ -131,12 +132,12 @@ export function getTaskColumns({
         );
       },
       cell: ({ row }) => {
-        const status = row.getValue("status") as string;
+        const status = row.getValue("status") as TaskStatus;
         return (
           <Badge
             variant="secondary"
             className={
-              STATUS_COLORS[status as keyof typeof STATUS_COLORS] ||
+              STATUS_COLORS[status] ||
               "bg-gray-500/10"
             }
           >

@@ -29,12 +29,17 @@ export function useTaskReport() {
         limit: 1000,
       });
 
-      if (!response.success || !response.tasks?.length) {
+      if (!response.success) {
+        toastError(response.error || "Failed to generate report");
+        return null;
+      }
+
+      if (!response.tasks.length) {
         toastError("No tasks found for the selected range");
         return null;
       }
 
-      return response.tasks as Task[];
+      return response.tasks;
     } catch (error) {
       console.error("Failed to fetch report tasks:", error);
       toastError("Failed to generate report");

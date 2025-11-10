@@ -5,6 +5,8 @@ import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
+  OnChangeFn,
+  PaginationState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -24,15 +26,12 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pageCount: number;
-  pagination: {
-    pageIndex: number;
-    pageSize: number;
-  };
-  onPaginationChange: (pagination: any) => void;
+  pagination: PaginationState;
+  onPaginationChange: OnChangeFn<PaginationState>;
   sorting: SortingState;
-  onSortingChange: (sorting: any) => void;
+  onSortingChange: OnChangeFn<SortingState>;
   columnFilters: ColumnFiltersState;
-  onColumnFiltersChange: (filters: any) => void;
+  onColumnFiltersChange: OnChangeFn<ColumnFiltersState>;
   globalFilter: string;
   onGlobalFilterChange: (filter: string) => void;
   filterOptions?: {

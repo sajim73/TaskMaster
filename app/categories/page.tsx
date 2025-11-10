@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { CategoryDialog } from "./_components/category-dialog";
+import { CategoryDialog, CategoryFormValues } from "./_components/category-dialog";
 import { PredefinedCategoriesDialog } from "./_components/predefined-categories-dialog";
-import { createCategory, updateCategory, deleteCategory } from "@/lib/api/categories";
+import {
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  type CategoryData,
+} from "@/lib/api/categories";
 import {
   Table,
   TableBody,
@@ -40,9 +45,10 @@ export default function CategoriesPage() {
     loadCategories({ force: true });
   }, [isReady, loadCategories]);
 
-  async function handleCreateCategory(data: any) {
+  async function handleCreateCategory(data: CategoryFormValues) {
     try {
-      const response = await createCategory(data);
+      const payload: CategoryData = { ...data };
+      const response = await createCategory(payload);
       if (response.success) {
         toastSuccess("Category created successfully");
         await loadCategories({ force: true });
@@ -54,15 +60,18 @@ export default function CategoriesPage() {
     }
   }
 
-  async function handleUpdateCategory(data: any) {
+  async function handleUpdateCategory(data: CategoryFormValues) {
     if (!editingCategory) return;
 
     try {
-      const response = await updateCategory(editingCategory._id, data);
+      const payload: CategoryData = { ...data };
+      const response = await updateCategory(editingCategory._id, payload);
       if (response.success) {
         toastSuccess("Category updated successfully");
         await loadCategories({ force: true });
         setEditingCategory(null);
+      } else {
+        toastError(response.error || "Failed to update category");
       }
     } catch (error) {
       toastError("Failed to update category");
@@ -188,7 +197,16 @@ export default function CategoriesPage() {
           if (!open) setEditingCategory(null);
         }}
         onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory}
-        initialData={editingCategory || undefined}
+        initialData={
+          editingCategory
+            ? {
+                name: editingCategory.name,
+                description: editingCategory.description,
+                color: editingCategory.color,
+                icon: editingCategory.icon,
+              }
+            : undefined
+        }
         title={editingCategory ? "Edit Category" : "New Category"}
         description={
           editingCategory

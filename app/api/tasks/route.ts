@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import { requireAuth } from "@/lib/middleware/auth";
 import { Task } from "@/lib/types";
-import { ObjectId } from "mongodb";
+import { ObjectId, type Document, type Filter } from "mongodb";
 import { parseDateString } from "@/lib/date-utils";
 import { serializeTask } from "@/lib/serializers/task";
+import type { TaskPriority, TaskStatus } from "@/lib/types/shared";
 
 // GET /api/tasks - List all tasks with filtering, sorting, pagination
 export async function GET(request: NextRequest) {
@@ -34,26 +35,29 @@ export async function GET(request: NextRequest) {
     const tasksCollection = db.collection<Task>("tasks");
 
     // Build query
-    const query: any = { userId: new ObjectId(user.userId) };
+    const query: Filter<Task> & Document = { userId: new ObjectId(user.userId) };
 
-    if (status) query.status = status;
+    if (isTaskStatus(status)) query.status = status;
     if (category) query.category = category;
-    if (priority) query.priority = priority;
+    if (isTaskPriority(priority)) query.priority = priority;
 
     // Date range filter
     if (startDate || endDate) {
-      query.dueDate = {};
+      const dueDateFilter: Document = {};
       if (startDate) {
         const start = parseDateString(startDate);
-        if (start) query.dueDate.$gte = start;
+        if (start) dueDateFilter.$gte = start;
       }
       if (endDate) {
         const end = parseDateString(endDate);
         if (end) {
           // Set to end of day
           end.setHours(23, 59, 59, 999);
-          query.dueDate.$lte = end;
+          dueDateFilter.$lte = end;
         }
+      }
+      if (Object.keys(dueDateFilter).length > 0) {
+        query.dueDate = dueDateFilter;
       }
     }
     if (search) {
@@ -89,8 +93,8 @@ export async function GET(request: NextRequest) {
         total,
       },
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Get tasks error:", error);
@@ -117,9 +121,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (priority && !["low", "medium", "high"].includes(priority)) {
+    if (priority && !isTaskPriority(priority)) {
       return NextResponse.json(
         { error: "Invalid priority" },
+        { status: 400 }
+      );
+    }
+
+    if (status && !isTaskStatus(status)) {
+      return NextResponse.json(
+        { error: "Invalid status" },
         { status: 400 }
       );
     }
@@ -127,22 +138,27 @@ export async function POST(request: NextRequest) {
     const db = await getDatabase();
     const tasksCollection = db.collection<Task>("tasks");
 
-    const newTask: Omit<Task, "_id"> = {
+    const resolvedPriority: TaskPriority =
+      priority && isTaskPriority(priority) ? priority : "medium";
+    const resolvedStatus: TaskStatus =
+      status && isTaskStatus(status) ? status : "pending";
+
+    const newTask: Task = {
       userId: new ObjectId(user.userId),
       title,
       description: description || "",
       category: category || "",
-      priority: priority || "medium",
-      status: status || "pending",
-      dueDate: dueDate ? parseDateString(dueDate) ?? undefined : undefined,
+      priority: resolvedPriority,
+      status: resolvedStatus,
+      dueDate: dueDate ? parseDateString(dueDate) ?? null : null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    const result = await tasksCollection.insertOne(newTask as Task);
+    const result = await tasksCollection.insertOne({ ...newTask });
 
     const insertedTask: Task = {
-      ...(newTask as Task),
+      ...newTask,
       _id: result.insertedId,
     };
 
@@ -150,8 +166,8 @@ export async function POST(request: NextRequest) {
       success: true,
       task: serializeTask(insertedTask),
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Create task error:", error);
@@ -160,6 +176,14 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function isTaskPriority(value: string | null): value is TaskPriority {
+  return value === "low" || value === "medium" || value === "high";
+}
+
+function isTaskStatus(value: string | null): value is TaskStatus {
+  return value === "pending" || value === "completed" || value === "overdue";
 }
 
 

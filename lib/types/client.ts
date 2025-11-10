@@ -1,18 +1,6 @@
-export type ClientTask = {
-  _id: string;
-  title: string;
-  description?: string;
-  category?: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "completed" | "overdue";
-  dueDate?: string | null;
-};
+import type { CategoryResponse, TaskResponse } from "@/lib/types/api";
 
-export type ClientCategory = {
-  _id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-};
+export type ClientTask = TaskResponse;
+
+export type ClientCategory = CategoryResponse;
 

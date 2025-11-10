@@ -3,6 +3,7 @@ import { getDatabase } from "@/lib/mongodb";
 import { requireAuth } from "@/lib/middleware/auth";
 import { Category, Task } from "@/lib/types";
 import { ObjectId } from "mongodb";
+import { serializeCategory } from "@/lib/serializers/category";
 
 // POST /api/categories/[id] - Update category
 export async function POST(
@@ -27,7 +28,7 @@ export async function POST(
     const categoriesCollection = db.collection<Category>("categories");
 
     // Build update object
-    const updateFields: any = {
+    const updateFields: Partial<Category> = {
       updatedAt: new Date(),
     };
 
@@ -54,14 +55,10 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      category: {
-        ...result,
-        _id: result._id?.toString(),
-        userId: result.userId.toString(),
-      },
+      category: serializeCategory(result),
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Update category error:", error);
@@ -137,8 +134,8 @@ export async function DELETE(
       success: true,
       message: "Category deleted successfully",
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Delete category error:", error);

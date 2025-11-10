@@ -32,7 +32,7 @@ const categorySchema = z.object({
   icon: z.string(),
 });
 
-type CategoryFormValues = z.infer<typeof categorySchema>;
+export type CategoryFormValues = z.infer<typeof categorySchema>;
 
 interface CategoryDialogProps {
   open: boolean;

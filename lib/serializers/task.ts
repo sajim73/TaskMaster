@@ -2,19 +2,7 @@ import { ObjectId } from "mongodb";
 
 import { Task } from "@/lib/types";
 import { formatDateStringUTC } from "@/lib/date-utils";
-
-export interface SerializedTask {
-  _id?: string;
-  userId: string;
-  title: string;
-  description: string;
-  category: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "completed" | "overdue";
-  dueDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { TaskResponse } from "@/lib/types/api";
 
 function toISOString(value: Date | string | undefined | null): string {
   if (!value) {
@@ -25,11 +13,11 @@ function toISOString(value: Date | string | undefined | null): string {
   return date.toISOString();
 }
 
-export function serializeTask(task: Task & { _id?: ObjectId | string | null }): SerializedTask {
+export function serializeTask(task: Task & { _id?: ObjectId | string | null }): TaskResponse {
   const dueDateValue = task.dueDate ? new Date(task.dueDate) : null;
 
   return {
-    _id: task._id ? task._id.toString() : undefined,
+    _id: task._id ? task._id.toString() : "",
     userId: task.userId.toString(),
     title: task.title,
     description: task.description ?? "",

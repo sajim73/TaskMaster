@@ -1,5 +1,7 @@
 import { ObjectId } from "mongodb";
 
+import type { TaskPriority, TaskStatus } from "@/lib/types/shared";
+
 // User types
 export interface User {
   _id?: ObjectId;
@@ -17,9 +19,9 @@ export interface Task {
   title: string;
   description?: string;
   category?: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "completed" | "overdue";
-  dueDate?: Date;
+  priority: TaskPriority;
+  status: TaskStatus;
+  dueDate?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,14 +37,3 @@ export interface Category {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// Settings types
-export interface UserSettings {
-  _id?: ObjectId;
-  userId: ObjectId;
-  theme: "light" | "dark" | "system";
-  notifications: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-

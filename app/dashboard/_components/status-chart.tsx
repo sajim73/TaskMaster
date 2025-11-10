@@ -3,6 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Pie, PieChart, Legend } from "recharts";
+import {
+  TASK_STATUSES,
+  TASK_STATUS_LABELS,
+  type TaskStatus,
+} from "@/lib/types/shared";
 
 interface StatusChartProps {
   completed: number;
@@ -10,30 +15,35 @@ interface StatusChartProps {
   overdue: number;
 }
 
-export function StatusChart({ completed, pending, overdue }: StatusChartProps) {
-  const chartData = [
-    { status: "completed", tasks: completed, fill: "hsl(142, 71%, 45%)" },
-    { status: "pending", tasks: pending, fill: "hsl(217, 91%, 60%)" },
-    { status: "overdue", tasks: overdue, fill: "hsl(0, 72%, 51%)" },
-  ].filter((item) => item.tasks > 0);
+const STATUS_FILL_COLORS: Record<TaskStatus, string> = {
+  completed: "hsl(142, 71%, 45%)",
+  pending: "hsl(217, 91%, 60%)",
+  overdue: "hsl(0, 72%, 51%)",
+};
 
-  const chartConfig = {
-    tasks: {
-      label: "Tasks",
-    },
-    completed: {
-      label: "Completed",
-      color: "hsl(142, 71%, 45%)",
-    },
-    pending: {
-      label: "Pending",
-      color: "hsl(217, 91%, 60%)",
-    },
-    overdue: {
-      label: "Overdue",
-      color: "hsl(0, 72%, 51%)",
-    },
+export function StatusChart({ completed, pending, overdue }: StatusChartProps) {
+  const counts: Record<TaskStatus, number> = {
+    completed,
+    pending,
+    overdue,
   };
+
+  const chartData = TASK_STATUSES.map((status) => ({
+    status,
+    tasks: counts[status],
+    fill: STATUS_FILL_COLORS[status],
+  })).filter((item) => item.tasks > 0);
+
+  const chartConfig: Record<string, { label: string; color?: string }> = {
+    tasks: { label: "Tasks" },
+  };
+
+  TASK_STATUSES.forEach((status) => {
+    chartConfig[status] = {
+      label: TASK_STATUS_LABELS[status],
+      color: STATUS_FILL_COLORS[status],
+    };
+  });
 
   const total = completed + pending + overdue;
 

@@ -3,21 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Cell } from "recharts";
-
-interface CategoryData {
-  category: string;
-  count: number;
-}
-
-interface Category {
-  _id: string;
-  name: string;
-  color?: string;
-}
+import type { TaskStatsSummary } from "@/lib/types/api";
+import type { ClientCategory } from "@/lib/types/client";
 
 interface CategoryChartProps {
-  data: CategoryData[];
-  categories: Category[];
+  data: TaskStatsSummary["byCategory"];
+  categories: ClientCategory[];
 }
 
 export function CategoryChart({ data, categories }: CategoryChartProps) {

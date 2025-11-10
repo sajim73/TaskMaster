@@ -3,6 +3,8 @@ import { getDatabase } from "@/lib/mongodb";
 import { requireAuth } from "@/lib/middleware/auth";
 import { Task } from "@/lib/types";
 import { ObjectId } from "mongodb";
+import { serializeTask } from "@/lib/serializers/task";
+import type { TaskPriority } from "@/lib/types/shared";
 
 // GET /api/tasks/stats - Get task statistics for dashboard
 export async function GET(request: NextRequest) {
@@ -54,25 +56,28 @@ export async function GET(request: NextRequest) {
         pending,
         overdue,
         byCategory: categoryStats.map((stat) => ({
-          category: stat._id || "Uncategorized",
+          category: typeof stat._id === "string" && stat._id.length > 0 ? stat._id : "Uncategorized",
           count: stat.count,
         })),
         byPriority: priorityStats.map((stat) => ({
-          priority: stat._id,
+          priority: isTaskPriority(stat._id) ? stat._id : "medium",
           count: stat.count,
         })),
       },
-      recentActivity: recentActivity.map((task) => ({
-        _id: task._id?.toString(),
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        category: task.category,
-        updatedAt: task.updatedAt,
-      })),
+      recentActivity: recentActivity.map((task) => {
+        const { _id, title, description, status, category, updatedAt } = serializeTask(task);
+        return {
+          _id: _id ?? "",
+          title,
+          description,
+          status,
+          category,
+          updatedAt,
+        };
+      }),
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Get stats error:", error);
@@ -81,6 +86,10 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function isTaskPriority(value: unknown): value is TaskPriority {
+  return value === "low" || value === "medium" || value === "high";
 }
 
 

@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import type { Task } from "@/app/tasks/_components/task-columns";
 import type { ClientCategory } from "@/lib/types/client";
+import type { TaskStatus } from "@/lib/types/shared";
+import { TASK_STATUS_LABELS } from "@/lib/types/shared";
 import { getCategoryIcon } from "@/lib/category-icons";
 
 function ReportContent() {
@@ -67,7 +69,7 @@ function ReportContent() {
         if (!tasksResponse.success) {
           throw new Error(tasksResponse.error || "Failed to load tasks");
         }
-        setTasks(tasksResponse.tasks as Task[]);
+        setTasks(tasksResponse.tasks);
 
         if (categoriesResponse.success) {
           setCategories(categoriesResponse.categories);
@@ -97,13 +99,16 @@ function ReportContent() {
   }, [loading, tasks, hasPrinted]);
 
   const statusCounts = useMemo(() => {
-    return tasks.reduce(
-      (acc, task) => {
-        acc[task.status as "pending" | "completed" | "overdue"] += 1;
-        return acc;
-      },
-      { pending: 0, completed: 0, overdue: 0 }
-    );
+    const initialCounts: Record<TaskStatus, number> = {
+      pending: 0,
+      completed: 0,
+      overdue: 0,
+    };
+
+    return tasks.reduce((acc, task) => {
+      acc[task.status] += 1;
+      return acc;
+    }, initialCounts);
   }, [tasks]);
 
   const categoryData = useMemo(() => {
@@ -130,9 +135,21 @@ function ReportContent() {
   const statItems = useMemo(
     () => [
       { title: "Total Tasks", value: tasks.length, icon: ListTodo },
-      { title: "Completed", value: statusCounts.completed, icon: CheckCircle2 },
-      { title: "Pending", value: statusCounts.pending, icon: Clock },
-      { title: "Overdue", value: statusCounts.overdue, icon: AlertCircle },
+      {
+        title: TASK_STATUS_LABELS.completed,
+        value: statusCounts.completed,
+        icon: CheckCircle2,
+      },
+      {
+        title: TASK_STATUS_LABELS.pending,
+        value: statusCounts.pending,
+        icon: Clock,
+      },
+      {
+        title: TASK_STATUS_LABELS.overdue,
+        value: statusCounts.overdue,
+        icon: AlertCircle,
+      },
     ],
     [statusCounts, tasks.length]
   );

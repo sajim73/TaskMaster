@@ -12,15 +12,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { getTasks, createTask, updateTask } from "@/lib/api/tasks";
+import {
+  getTasks,
+  createTask,
+  updateTask,
+  type TaskData,
+} from "@/lib/api/tasks";
 import { Plus } from "lucide-react";
-import { TaskDialog } from "../tasks/_components/task-dialog";
+import { TaskDialog, TaskFormValues } from "../tasks/_components/task-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { parseDateString, isSameDate, formatDateString, getFirstDayOfMonth, getLastDayOfMonth } from "@/lib/date-utils";
 import { STATUS_COLORS } from "@/lib/constants";
 import { useCategories } from "@/lib/store/categories";
 import { PageShell } from "@/components/page-shell";
 import type { ClientTask } from "@/lib/types/client";
+import {
+  TASK_STATUSES,
+  TASK_STATUS_LABELS,
+  type TaskStatus,
+} from "@/lib/types/shared";
 
 export default function CalendarPage() {
   const { isReady, isLoading } = useRequireAuth();
@@ -86,26 +96,30 @@ export default function CalendarPage() {
       const monthEnd = getLastDayOfMonth(displayedMonth);
 
       const tasksResponse = await getTasks({
-          startDate: formatDateString(monthStart),
-          endDate: formatDateString(monthEnd),
+        startDate: formatDateString(monthStart),
+        endDate: formatDateString(monthEnd),
       });
 
       if (tasksResponse.success) {
         setAllTasks(tasksResponse.tasks);
-        
+
         // After loading tasks, run smart date selection if month was changed via dropdown
         if (monthJustChanged) {
           selectSmartDate(displayedMonth, tasksResponse.tasks);
           setMonthJustChanged(false);
         }
+      } else {
+        toastError(tasksResponse.error || "Failed to fetch data");
+        setAllTasks([]);
       }
 
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      toastError("Failed to fetch data");
     } finally {
       setLoading(false);
     }
-  }, [displayedMonth, monthJustChanged, selectSmartDate]);
+  }, [displayedMonth, monthJustChanged, selectSmartDate, toastError]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -127,14 +141,18 @@ export default function CalendarPage() {
            }).length;
   };
 
-  const statusBorderColors = {
+  const statusBorderColors: Record<TaskStatus, string> = {
     completed: "border-green-500",
     pending: "border-blue-500",
     overdue: "border-red-500",
   };
 
-  async function handleCreateTask(data: any) {
-    const response = await createTask(data);
+  async function handleCreateTask(data: TaskFormValues) {
+    const payload: TaskData = {
+      ...data,
+      dueDate: data.dueDate ? data.dueDate : undefined,
+    };
+    const response = await createTask(payload);
     if (response.success) {
       toastSuccess("Your task has been created successfully", "Task created");
       fetchData();
@@ -143,9 +161,9 @@ export default function CalendarPage() {
     }
   }
 
-  async function handleStatusChange(taskId: string, newStatus: string) {
+  async function handleStatusChange(taskId: string, newStatus: TaskStatus) {
     const response = await updateTask(taskId, { 
-      status: newStatus as "pending" | "completed" | "overdue"
+      status: newStatus
     });
     if (response.success) {
       toastSuccess("Task status has been updated", "Status updated");
@@ -262,8 +280,7 @@ export default function CalendarPage() {
                   <div
                     key={task._id}
                     className={`border-l-4 pl-4 py-2 ${
-                      statusBorderColors[task.status as keyof typeof statusBorderColors] ||
-                      "border-gray-500"
+                      statusBorderColors[task.status] || "border-gray-500"
                     }`}
                   >
                     <div className="space-y-1.5">
@@ -271,20 +288,23 @@ export default function CalendarPage() {
                         <p className="font-medium leading-tight">{task.title}</p>
                         <Select
                           value={task.status}
-                          onValueChange={(value) => handleStatusChange(task._id, value)}
+                          onValueChange={(value) =>
+                            handleStatusChange(task._id, value as TaskStatus)
+                          }
                         >
                           <SelectTrigger
                             className={`h-7 w-[120px] border-0 ${
-                              STATUS_COLORS[task.status as keyof typeof STATUS_COLORS] ||
-                              "bg-gray-500/10"
+                              STATUS_COLORS[task.status] || "bg-gray-500/10"
                             }`}
                           >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pending">pending</SelectItem>
-                            <SelectItem value="completed">completed</SelectItem>
-                            <SelectItem value="overdue">overdue</SelectItem>
+                            {TASK_STATUSES.map((statusOption) => (
+                              <SelectItem key={statusOption} value={statusOption}>
+                                {TASK_STATUS_LABELS[statusOption]}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

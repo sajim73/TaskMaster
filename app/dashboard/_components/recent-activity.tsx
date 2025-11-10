@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_COLORS } from "@/lib/constants";
+import type { TaskRecentActivityItem } from "@/lib/types/api";
 
 function timeAgo(date: Date): string {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -20,17 +21,8 @@ function timeAgo(date: Date): string {
   return `${months}mo ago`;
 }
 
-interface RecentTask {
-  _id: string;
-  title: string;
-  description?: string;
-  status: string;
-  category?: string;
-  updatedAt: string;
-}
-
 interface RecentActivityProps {
-  tasks: RecentTask[];
+  tasks: TaskRecentActivityItem[];
 }
 
 export function RecentActivity({ tasks }: RecentActivityProps) {
@@ -79,8 +71,7 @@ export function RecentActivity({ tasks }: RecentActivityProps) {
               <Badge
                 variant="secondary"
                 className={
-                        STATUS_COLORS[task.status as keyof typeof STATUS_COLORS] ||
-                  "bg-gray-500/10"
+                  STATUS_COLORS[task.status] || "bg-gray-500/10"
                 }
               >
                 {task.status}

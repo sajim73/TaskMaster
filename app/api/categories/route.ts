@@ -3,6 +3,7 @@ import { getDatabase } from "@/lib/mongodb";
 import { requireAuth } from "@/lib/middleware/auth";
 import { Category } from "@/lib/types";
 import { ObjectId } from "mongodb";
+import { serializeCategory } from "@/lib/serializers/category";
 
 // GET /api/categories - List all categories
 export async function GET(request: NextRequest) {
@@ -19,14 +20,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      categories: categories.map((cat) => ({
-        ...cat,
-        _id: cat._id?.toString(),
-        userId: cat.userId.toString(),
-      })),
+      categories: categories.map((cat) => serializeCategory(cat)),
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Get categories error:", error);
@@ -69,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newCategory: Omit<Category, "_id"> = {
+    const newCategory: Category = {
       userId: new ObjectId(user.userId),
       name,
       description: description || "",
@@ -79,18 +76,19 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    const result = await categoriesCollection.insertOne(newCategory as Category);
+    const result = await categoriesCollection.insertOne({
+      ...newCategory,
+    });
 
     return NextResponse.json({
       success: true,
-      category: {
-        _id: result.insertedId.toString(),
+      category: serializeCategory({
         ...newCategory,
-        userId: newCategory.userId.toString(),
-      },
+        _id: result.insertedId,
+      }),
     });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Create category error:", error);

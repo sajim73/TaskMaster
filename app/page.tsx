@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { HeroCta } from "./_components/hero-cta";
 import { 
   CheckCircle2, 
   LayoutDashboard, 
@@ -117,16 +116,7 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button size="lg" className="text-lg px-8" asChild>
-              <Link href="/register">
-                Get Started
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-              <Link href="/login">
-                Login
-              </Link>
-            </Button>
+            <HeroCta />
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 pt-8 text-sm text-muted-foreground">

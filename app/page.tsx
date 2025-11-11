@@ -140,7 +140,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span>Exports and reports</span>
+              <span>Data exports and reports</span>
             </div>
           </div>
         </div>

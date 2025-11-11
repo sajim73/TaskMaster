@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TaskMaster - Powerful Task Management System",
-  description: "Manage your tasks efficiently with TaskMaster. Track progress, visualize productivity, and stay organized with our comprehensive task management platform.",
+  title: "TaskMaster",
+  description: "TaskMaster - Your Productivity Tool for Success",
 };
 
 export default function RootLayout({

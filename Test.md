@@ -864,7 +864,6 @@ Features displayed with descriptions:
 2. Update profile information:
    - Full Name
    - Email
-   - Profile Picture (if applicable)
 3. Save changes
 
 **Expected Results:**
@@ -874,29 +873,6 @@ Features displayed with descriptions:
 - Success notification displayed
 - Updated info reflected in UI
 - Email change requires verification (if applicable)
-
-**Priority:** High  
-**Status:** Pass/Fail/Blocked
-
----
-
-#### TC-SET-003: Change Password
-**Objective:** Verify password change functionality  
-**Prerequisites:** User logged in  
-**Steps:**
-1. Navigate to Security/Password section
-2. Enter current password
-3. Enter new password
-4. Confirm new password
-5. Click "Update Password"
-
-**Expected Results:**
-- Current password validated
-- New password meets requirements
-- Confirmation must match new password
-- Password updated in database
-- Success notification displayed
-- User remains logged in after change
 
 **Priority:** High  
 **Status:** Pass/Fail/Blocked
@@ -921,52 +897,6 @@ Features displayed with descriptions:
 - Theme preference saved for user
 - Theme persists across sessions
 - No visual glitches during switch
-
-**Priority:** Medium  
-**Status:** Pass/Fail/Blocked
-
----
-
-#### TC-SET-005: Notification Preferences
-**Objective:** Verify notification settings (if applicable)  
-**Prerequisites:** User logged in  
-**Steps:**
-1. Navigate to Notification settings
-2. Toggle notification preferences:
-   - Email notifications
-   - Task reminders
-   - Due date alerts
-3. Save preferences
-
-**Expected Results:**
-- Notification toggles functional
-- Preferences saved to database
-- Email notifications respect settings
-- Browser notifications request permission
-- Settings persist across sessions
-
-**Priority:** Low  
-**Status:** Pass/Fail/Blocked
-
----
-
-#### TC-SET-006: Delete Account
-**Objective:** Verify account deletion process  
-**Prerequisites:** User logged in  
-**Steps:**
-1. Navigate to Account settings
-2. Locate "Delete Account" option
-3. Click delete button
-4. Enter password for confirmation
-5. Confirm deletion
-
-**Expected Results:**
-- Delete option clearly labeled
-- Warning message displayed
-- Password confirmation required
-- All user data deleted from database
-- User logged out after deletion
-- Cannot login with deleted account
 
 **Priority:** Medium  
 **Status:** Pass/Fail/Blocked
@@ -1324,52 +1254,6 @@ Features displayed with descriptions:
 
 ---
 
-## 5. Known Issues & Bugs
-
-### 5.1 Critical Issues
-
-**Issue ID:** BUG-001  
-**Severity:** Critical  
-**Description:** [Description of critical bug]  
-**Steps to Reproduce:**  
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
-
-**Expected:** [Expected behavior]  
-**Actual:** [Actual behavior]  
-**Workaround:** [Temporary solution if available]  
-**Status:** Open/In Progress/Resolved
-
----
-
-### 5.2 High Priority Issues
-
-**Issue ID:** BUG-002  
-**Severity:** High  
-**Description:** [Description]  
-**Status:** Open
-
----
-
-### 5.3 Medium Priority Issues
-
-**Issue ID:** BUG-003  
-**Severity:** Medium  
-**Description:** [Description]  
-**Status:** Open
-
----
-
-### 5.4 Low Priority Issues
-
-**Issue ID:** BUG-004  
-**Severity:** Low  
-**Description:** [Description]  
-**Status:** Open
-
----
-
 ## 6. Test Results Summary
 
 ### 6.1 Test Execution Statistics
@@ -1527,14 +1411,14 @@ Features displayed with descriptions:
 
 ### 10.2 Approvals
 
-**Tester:** _________________________  
-**Date:** _________________________
+**Tester:** Munteeq Ahmad Manzoor 
+**Date:** 11/24/2025
 
-**Developer:** _________________________  
-**Date:** _________________________
+**Developer:** Muhammad Sabih  
+**Date:** 11/20/2025
 
-**Project Manager:** _________________________  
-**Date:** _________________________
+**Project Manager:** Sajim Ahmed  
+**Date:** 11/15/2025
 
 ---
 
@@ -1575,9 +1459,6 @@ Category: Development
 POST /api/auth/register
 POST /api/auth/login
 POST /api/auth/logout
-POST /api/auth/forgot-password
-POST /api/auth/reset-password
-GET  /api/auth/verify-email
 
 ### B.2 Task Endpoints
 

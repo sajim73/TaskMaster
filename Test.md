@@ -220,31 +220,6 @@ Features displayed with descriptions:
 
 ---
 
-#### TC-AUTH-004: Password Reset Flow
-**Objective:** Verify password reset functionality  
-**Prerequisites:** User account exists  
-**Steps:**
-1. Navigate to login page
-2. Click "Forgot Password?" link
-3. Enter registered email
-4. Submit reset request
-5. Check email for reset link
-6. Click reset link
-7. Enter new password
-8. Confirm password reset
-
-**Expected Results:**
-- Reset email sent successfully
-- Reset link expires after set time period
-- New password meets security requirements
-- Success confirmation displayed
-- User can login with new password
-
-**Priority:** High  
-**Status:** Pass/Fail/Blocked
-
----
-
 #### TC-AUTH-005: User Logout
 **Objective:** Verify user can logout successfully  
 **Prerequisites:** User logged in  
